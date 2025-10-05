@@ -1,0 +1,64 @@
+using UnityEngine;
+using TMPro;  // TextMeshPro kütüphanesini ekliyoruz.
+
+public class PlayerController : MonoBehaviour
+{
+    public float moveSpeed = 4f; // Oyuncunun hareket hızı
+
+    [Header("UI")] 
+    public TextMeshProUGUI scoreText; // UI üzerinde skor göstermek için TextMeshPro
+    private int score = 0; // Başlangıç skoru
+
+    private Animator anim; // Animator referansı
+
+    void Awake()
+    {
+        anim = GetComponent<Animator>(); // Animator'ı alıyoruz.
+    }
+
+    void Start()
+    {
+        // Başlangıçta UI üzerinde skoru güncelliyoruz.
+        if (scoreText) scoreText.text = "Score: " + score;
+    }
+
+    void Update()
+    {
+        // WASD tuşları ile hareket için input alıyoruz
+        float h = Input.GetAxisRaw("Horizontal"); // Yatay hareket (A/D veya sol/sağ ok)
+        float v = Input.GetAxisRaw("Vertical"); // Dikey hareket (W/S veya yukarı/aşağı ok)
+        
+        // Hareket yönünü hesaplıyoruz.
+        Vector3 dir = new Vector3(h, 0f, v).normalized;
+
+        // Eğer karakter hareket ediyorsa, animasyonu yürüyüş olarak ayarlıyoruz.
+        bool walking = dir.sqrMagnitude > 0.01f; // Eğer hareket varsa, animasyonu tetikliyoruz.
+        if (anim) anim.SetBool("isWalking", walking);
+
+        // Eğer hareket varsa, karakteri o yönde hareket ettiriyoruz.
+        if (walking)
+        {
+            transform.forward = dir; // Karakteri yönlendirme
+            transform.position += dir * moveSpeed * Time.deltaTime; // Hareket ettirme
+        }
+    }
+
+    // ←← BURASI EN ÖNEMLİ KISIM
+    // Coin'e çarpma olayını tetiklemek için trigger kullanıyoruz.
+    void OnTriggerEnter(Collider other)
+    {
+        Debug.Log("Trigger'a girildi: " + other.name + " / Tag: " + other.tag);  // Konsolda görmek için
+
+        // Eğer Coin tag'ine sahip bir nesneye çarptıysa, bu bloğa girer.
+        if (other.CompareTag("Coin"))
+        {
+            Destroy(other.gameObject); // Coin nesnesini yok ediyoruz
+            score++; // Skoru artırıyoruz
+
+            // UI üzerindeki skoru güncelliyoruz.
+            if (scoreText) scoreText.text = "Score: " + score;
+
+            Debug.Log("Coin toplandı! Yeni skor: " + score); // Konsola yazdırıyoruz.
+        }
+    }
+}
